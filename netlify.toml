@@ -1,0 +1,6 @@
+[build]
+functions = "netlify/functions"
+
+[[scheduled.functions]]
+function = "logg-centova"
+cron = "*/5 * * * *"
