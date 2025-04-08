@@ -1,0 +1,9 @@
+{
+  "name": "centova-logger",
+  "version": "1.0.0",
+  "description": "Logger Centova-lyttere til Supabase",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^2.6.9"
+  }
+}
