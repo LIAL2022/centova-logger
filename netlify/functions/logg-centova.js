@@ -1,28 +1,21 @@
 export async function handler(event, context) {
   try {
-    // 🔁 Hent data fra CentovaCast
     const response = await fetch("https://kepler.shoutca.st/rpc/lial/streaminfo.get", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mountpoint: "/stream" }) // Endre om mountpoint er annerledes
+      body: JSON.stringify({ mountpoint: "/stream" })
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("❌ CentovaCast API-feil:", err);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Feil ved henting fra CentovaCast", detail: err })
-      };
-    }
-
     const result = await response.json();
-    console.log("🎧 CentovaCast data mottatt:", result);
 
+    // Logg hele svaret for sikkerhets skyld
+    console.log("🎧 API-respons:", JSON.stringify(result, null, 2));
+
+    // Hent antall lyttere – samme som før
     const listeners = result?.listeners ?? 0;
+
     const timestamp = new Date().toISOString();
 
-    // 🔁 Send data til Supabase
     const supabaseRes = await fetch("https://celickborwdktwuoekfn.supabase.co/rest/v1/stream_stats", {
       method: "POST",
       headers: {
@@ -38,14 +31,14 @@ export async function handler(event, context) {
 
     if (!supabaseRes.ok) {
       const err = await supabaseRes.text();
-      console.error("❌ Supabase post-feil:", err);
+      console.error("❌ Supabase-feil:", err);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Feil ved lagring i Supabase", detail: err })
+        body: JSON.stringify({ error: "Supabase error", detail: err })
       };
     }
 
-    console.log(`✅ Lagret ${listeners} lyttere til Supabase @ ${timestamp}`);
+    console.log(`✅ Logget ${listeners} lyttere @ ${timestamp}`);
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, listeners })
