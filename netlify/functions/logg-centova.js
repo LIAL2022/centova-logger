@@ -4,7 +4,7 @@ export async function handler(event, context) {
     const response = await fetch("https://kepler.shoutca.st/rpc/lial/streaminfo.get", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mountpoint: "/stream" }) // Endre om din mountpoint er noe annet
+      body: JSON.stringify({ mountpoint: "/stream" }) // Endre om mountpoint er annerledes
     });
 
     if (!response.ok) {
