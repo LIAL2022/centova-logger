@@ -19,8 +19,8 @@ export async function handler(event, context) {
     const result = await response.json();
     console.log("🎧 API-respons:", JSON.stringify(result, null, 2));
 
-    // ✅ Hent ut riktig antall lyttere
-    const listeners = result?.data?.[0]?.listeners ?? 0;
+    // ✅ Hent total lyttertall
+    const listeners = result?.data?.[0]?.listenertotal ?? 0;
     const timestamp = new Date().toISOString();
 
     // 🔁 Send til Supabase
