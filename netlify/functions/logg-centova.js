@@ -1,42 +1,46 @@
-const fetch = require("node-fetch");
-
-exports.handler = async function(event, context) {
-  const CENTOVA_URL = "https://kepler.shoutca.st/rpc/lial/streaminfo.get";
-  const SUPABASE_URL = "https://celickborwdktwuoekfn.supabase.co/rest/v1/stream_stats";
-  const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlbGlja2Jvcndka3R3dW9la2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMjA1NTIsImV4cCI6MjA1OTY5NjU1Mn0.h06C_Q6jpvNNXMeqvTBaVrQ7vpvzrCe8Ks47mSrHDI4";
-
+export async function handler(event, context) {
   try {
-    const centovaRes = await fetch(CENTOVA_URL, {
+    // Hent data fra CentovaCast
+    const response = await fetch("https://kepler.shoutca.st/rpc/lial/streaminfo.get", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ json: true })
+      body: JSON.stringify({ mountpoint: "/stream" })
     });
 
-    const centovaData = await centovaRes.json();
-    const listeners = centovaData?.data?.[0]?.listeners ?? null;
-    if (listeners === null) throw new Error("Ingen lyttertall funnet.");
+    const result = await response.json();
+    const listeners = result?.listeners ?? 0;
 
-    const supabaseRes = await fetch(SUPABASE_URL, {
+    // Send til Supabase
+    const supabaseRes = await fetch("https://celickborwdktwuoekfn.supabase.co/rest/v1/stream_stats", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": API_KEY,
-        "Authorization": `Bearer ${API_KEY}`
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",  // Sett inn hele API-nøkkelen din
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // Sett inn hele Bearer-tokenet
       },
       body: JSON.stringify({
-        timestamp: new Date().toISOString(),
-        listeners: listeners
+        listeners,
+        timestamp: new Date().toISOString()
       })
     });
 
+    if (!supabaseRes.ok) {
+      const err = await supabaseRes.text();
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Supabase error", detail: err })
+      };
+    }
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `🎧 Logget ${listeners} lyttere.` })
+      body: JSON.stringify({ success: true, listeners })
     };
+
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message })
+      body: JSON.stringify({ error: "Exception", detail: err.message })
     };
   }
-};
+}
