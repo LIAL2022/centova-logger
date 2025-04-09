@@ -1,21 +1,29 @@
 export async function handler(event, context) {
   try {
+    // 🔁 Hent data fra CentovaCast
     const response = await fetch("https://kepler.shoutca.st/rpc/lial/streaminfo.get", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mountpoint: "/stream" })
     });
 
-    const result = await response.json();
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("❌ CentovaCast API-feil:", err);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "CentovaCast-feil", detail: err })
+      };
+    }
 
-    // Logg hele svaret for sikkerhets skyld
+    const result = await response.json();
     console.log("🎧 API-respons:", JSON.stringify(result, null, 2));
 
-    // Hent antall lyttere – samme som før
-    const listeners = result?.listeners ?? 0;
-
+    // ✅ Hent ut riktig antall lyttere
+    const listeners = result?.data?.[0]?.listeners ?? 0;
     const timestamp = new Date().toISOString();
 
+    // 🔁 Send til Supabase
     const supabaseRes = await fetch("https://celickborwdktwuoekfn.supabase.co/rest/v1/stream_stats", {
       method: "POST",
       headers: {
@@ -34,7 +42,7 @@ export async function handler(event, context) {
       console.error("❌ Supabase-feil:", err);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Supabase error", detail: err })
+        body: JSON.stringify({ error: "Supabase-feil", detail: err })
       };
     }
 
